@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from discord.ui import View, Button
-import os  # Pour récupérer le token depuis Railway
+import os
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -11,23 +11,39 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-TOKEN = os.getenv("TOKEN")  # Utilisation sécurisée du token via variable d'environnement
+TOKEN = os.getenv("TOKEN")
 
-# IDs des salons
-ACCUEIL_CHANNEL_ID = 1362035171301527654  # comment-faire-des-rencontres
+ACCUEIL_CHANNEL_ID = 1362035171301527654
 FILLE_CHANNEL_ID = 1362035175269077174
 GARCON_CHANNEL_ID = 1362035179358781480
 
-# Lien direct vers ton image Imgur corrigé
 IMAGE_URL = "https://i.imgur.com/JhYYTYA.png"
 
-# Associer message ID -> utilisateur
 presentation_authors = {}
+
+class DMButton(Button):
+    def __init__(self, user_id):
+        super().__init__(label="Contacter cette personne", style=discord.ButtonStyle.secondary)
+        self.user_id = user_id
+
+    async def callback(self, interaction: discord.Interaction):
+        target = await bot.fetch_user(self.user_id)
+        try:
+            await interaction.user.send(f"Tu as demandé à contacter {target.mention}. Voici son profil :")
+            await interaction.user.send(target.mention)
+            await interaction.response.send_message("La personne a été contactée en privé.", ephemeral=True)
+        except:
+            await interaction.response.send_message("Je n'ai pas pu envoyer de message privé.", ephemeral=True)
 
 class FormButtonView(View):
     def __init__(self):
         super().__init__(timeout=None)
         self.add_item(FormButton())
+
+class ProfileView(View):
+    def __init__(self, user_id):
+        super().__init__(timeout=None)
+        self.add_item(DMButton(user_id))
 
 class FormButton(Button):
     def __init__(self):
@@ -74,19 +90,18 @@ class FormButton(Button):
 
             genre = answers.get("genre", "").lower()
 
-            # Création de l'embed
             if "fille" in genre:
-                color = discord.Color.from_str("#FFC0CB")
-                title = "Nouveau profil Fille ! 💖"
+                color = discord.Color.from_str("#000000")
+                title = "🖤 Nouveau profil Fille !"
                 channel = bot.get_channel(FILLE_CHANNEL_ID)
             else:
-                color = discord.Color.from_str("#87CEFA")
-                title = "Nouveau profil Garçon ! 💙"
+                color = discord.Color.from_str("#000000")
+                title = "🖤 Nouveau profil Garçon !"
                 channel = bot.get_channel(GARCON_CHANNEL_ID)
 
             embed = discord.Embed(
                 title=title,
-                description=f"Voici la présentation de {interaction.user.mention} !",
+                description=f"\u2756 Un nouveau profil vient d'apparaître...\n\n> \u201cIl y a des regards qui racontent plus que mille mots.\u201d",
                 color=color
             )
             embed.add_field(name="Prénom", value=answers['prénom'], inline=True)
@@ -98,14 +113,12 @@ class FormButton(Button):
             embed.add_field(name="Recherche chez quelqu'un", value=answers['recherche_chez_autrui'], inline=False)
             embed.add_field(name="Passions", value=answers['passions'], inline=False)
             embed.add_field(name="Description", value=answers['description'], inline=False)
-            embed.set_thumbnail(url=interaction.guild.icon.url if interaction.guild.icon else discord.Embed.Empty)
-            embed.set_image(url=IMAGE_URL)
+            embed.set_thumbnail(url=IMAGE_URL)
 
-            message = await channel.send(embed=embed)
+            message = await channel.send(embed=embed, view=ProfileView(interaction.user.id))
             await message.add_reaction("✅")
             await message.add_reaction("❌")
 
-            # Sauvegarde de l'auteur de la présentation
             presentation_authors[message.id] = interaction.user.id
 
             await interaction.user.send("Ta présentation a été envoyée avec succès ! 💖")
@@ -135,6 +148,6 @@ async def on_reaction_add(reaction, user):
 
     message_id = reaction.message.id
     if message_id in presentation_authors:
-        pass  # Plus de DM envoyés
+        pass
 
 bot.run(TOKEN)
