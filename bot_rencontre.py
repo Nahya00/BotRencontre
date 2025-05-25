@@ -99,11 +99,14 @@ class FormButton(Button):
                 title = "🖤 Nouveau profil Garçon !"
                 channel = bot.get_channel(GARCON_CHANNEL_ID)
 
+            description = (
+                "\u2756 Un nouveau profil vient d'apparaître...\n\n"
+                "> \u201cIl y a des regards qui racontent plus que mille mots.\u201d"
+            )
+
             embed = discord.Embed(
                 title=title,
-                description=f"\u2756 Un nouveau profil vient d'apparaître...
-
-> \u201cIl y a des regards qui racontent plus que mille mots.\u201d",
+                description=description,
                 color=color
             )
             embed.add_field(name="Prénom", value=answers['prénom'], inline=True)
@@ -131,7 +134,7 @@ class FormButton(Button):
 @bot.event
 async def on_ready():
     print(f"Connecté en tant que {bot.user}")
-    
+
     channel = bot.get_channel(ACCUEIL_CHANNEL_ID)
     if channel:
         embed = discord.Embed(
@@ -153,3 +156,4 @@ async def on_reaction_add(reaction, user):
         pass
 
 bot.run(TOKEN)
+
