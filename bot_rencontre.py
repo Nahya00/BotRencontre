@@ -104,6 +104,7 @@ class FormButton(Button):
                 description=f"\u2756 Un nouveau profil vient d'apparaître...\n\n> \u201cIl y a des regards qui racontent plus que mille mots.\u201d",
                 color=color
             )
+            embed.set_author(name=interaction.user.name + "#" + interaction.user.discriminator, icon_url=interaction.user.avatar.url if interaction.user.avatar else None)
             embed.add_field(name="Prénom", value=answers['prénom'], inline=True)
             embed.add_field(name="Âge", value=answers['âge'], inline=True)
             embed.add_field(name="Département", value=answers['département'], inline=True)
