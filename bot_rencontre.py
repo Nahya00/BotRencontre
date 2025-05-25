@@ -20,6 +20,7 @@ GARCON_CHANNEL_ID = 1362035179358781480
 IMAGE_URL = "https://i.imgur.com/FQ4zDtv.gif"
 
 presentation_authors = {}
+user_profiles = {}  # stocke les embeds des profils avec les user_id
 
 class DMButton(Button):
     def __init__(self, user_id):
@@ -31,6 +32,13 @@ class DMButton(Button):
         try:
             await interaction.user.send(f"Tu as demandé à contacter {target.mention}. Voici son profil :")
             await interaction.user.send(target.mention)
+
+            # Récupère le profil du user qui a cliqué (l'auteur du clic)
+            if interaction.user.id in user_profiles:
+                reverse_embed = user_profiles[interaction.user.id]
+                await target.send(f"{interaction.user.mention} souhaite te contacter. Voici son profil :")
+                await target.send(embed=reverse_embed)
+
             await interaction.response.send_message("La personne a été contactée en privé.", ephemeral=True)
         except:
             await interaction.response.send_message("Je n'ai pas pu envoyer de message privé.", ephemeral=True)
@@ -101,7 +109,7 @@ class FormButton(Button):
 
             embed = discord.Embed(
                 title=title,
-                description=f"\u2756 Un nouveau profil vient d'apparaître...\n\n> \u201cIl y a des regards qui racontent plus que mille mots.\u201d",
+                description=f"❖ Un nouveau profil vient d'apparaître...\n\n> “Il y a des regards qui racontent plus que mille mots.”",
                 color=color
             )
             embed.set_author(name=interaction.user.name + "#" + interaction.user.discriminator, icon_url=interaction.user.avatar.url if interaction.user.avatar else None)
@@ -121,6 +129,7 @@ class FormButton(Button):
             await message.add_reaction("❌")
 
             presentation_authors[message.id] = interaction.user.id
+            user_profiles[interaction.user.id] = embed  # sauvegarde du profil pour DM inversé
 
             await interaction.user.send("Ta présentation a été envoyée avec succès ! 💖")
 
