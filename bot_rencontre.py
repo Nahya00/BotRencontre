@@ -69,7 +69,7 @@ class FormButton(Button):
             ]
 
             answers = {}
-            await interaction.user.send("**Salut ! On va remplir ta présentation 💬**")
+            await interaction.user.send("**Bienvenue dans le formulaire mystérieux...** \nPrends ton temps pour répondre. Chaque mot compte. 🖤")
 
             for question_text, key in questions:
                 valid = False
@@ -101,7 +101,9 @@ class FormButton(Button):
 
             embed = discord.Embed(
                 title=title,
-                description=f"\u2756 Un nouveau profil vient d'apparaître...\n\n> \u201cIl y a des regards qui racontent plus que mille mots.\u201d",
+                description=f"\u2756 Un nouveau profil vient d'apparaître...
+
+> \u201cIl y a des regards qui racontent plus que mille mots.\u201d",
                 color=color
             )
             embed.add_field(name="Prénom", value=answers['prénom'], inline=True)
