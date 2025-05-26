@@ -79,7 +79,12 @@ class DMButton(Button):
                 await log_channel.send(log_message)
 
         except:
-            await interaction.response.send_message("Je n'ai pas pu envoyer de message privé.", ephemeral=True)
+            await interaction.response.send_message("❌ Impossible de contacter cette personne, ses messages privés sont fermés ou refusés.", ephemeral=True)
+            log_channel = bot.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                log_message = f"❌ {interaction.user.name}#{interaction.user.discriminator} a tenté de contacter {target.name}#{target.discriminator} à {time}, mais les DM étaient fermés."
+                await log_channel.send(log_message)
 
 class ProfileView(View):
     def __init__(self, user_id):
@@ -191,4 +196,3 @@ async def on_ready():
         await channel.send(embed=embed, view=FormButtonView())
 
 bot.run(TOKEN)
-
