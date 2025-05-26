@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ui import View, Button
 import os
+from datetime import datetime
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -16,11 +17,19 @@ TOKEN = os.getenv("TOKEN")
 ACCUEIL_CHANNEL_ID = 1362035171301527654
 FILLE_CHANNEL_ID = 1362035175269077174
 GARCON_CHANNEL_ID = 1362035179358781480
+LOG_CHANNEL_ID = 1376347435747643475
 
 IMAGE_URL = "https://i.imgur.com/FQ4zDtv.gif"
 
 presentation_authors = {}
-user_profiles = {}  # stocke les embeds des profils avec les user_id
+user_profiles = {}
+contact_clicks = {}
+user_answers = {}
+
+def calculate_compatibility(answers1, answers2):
+    keys = ['genre', 'orientation', 'recherche', 'recherche_chez_autrui', 'passions']
+    matches = sum(1 for key in keys if key in answers1 and key in answers2 and answers1[key].lower() == answers2[key].lower())
+    return int((matches / len(keys)) * 100)
 
 class DMButton(Button):
     def __init__(self, user_id):
@@ -28,25 +37,49 @@ class DMButton(Button):
         self.user_id = user_id
 
     async def callback(self, interaction: discord.Interaction):
+        user_id = interaction.user.id
+        contact_clicks.setdefault(user_id, 0)
+
+        if contact_clicks[user_id] >= 3:
+            await interaction.response.send_message("❌ Tu as atteint la limite de 3 profils contactés.", ephemeral=True)
+            return
+
+        contact_clicks[user_id] += 1
         target = await bot.fetch_user(self.user_id)
         try:
-            await interaction.user.send(f"Tu as demandé à contacter {target.mention}. Voici son profil :")
+            await interaction.user.send(f"Tu as demandé à contacter {target.name}#{target.discriminator}. Voici son profil :")
             await interaction.user.send(target.mention)
 
-            # Récupère le profil du user qui a cliqué (l'auteur du clic)
-            if interaction.user.id in user_profiles:
-                reverse_embed = user_profiles[interaction.user.id]
-                await target.send(f"{interaction.user.mention} souhaite te contacter. Voici son profil :")
+            score = None
+            if user_id in user_profiles:
+                reverse_embed = user_profiles[user_id]
+                await target.send(f"{interaction.user.name}#{interaction.user.discriminator} souhaite te contacter. Voici son profil :")
                 await target.send(embed=reverse_embed)
 
-            await interaction.response.send_message("La personne a été contactée en privé.", ephemeral=True)
+                if self.user_id in user_answers and user_id in user_answers:
+                    score = calculate_compatibility(user_answers[self.user_id], user_answers[user_id])
+                    await target.send(f"🔮 Niveau de compatibilité estimé : {score}%")
+                    if score >= 90:
+                        await target.send("💘 Waouh ! Vous avez une connexion presque parfaite...")
+                    elif score < 30:
+                        await target.send("⚠️ Le destin semble capricieux... Faible compatibilité constatée.")
+
+            await interaction.response.send_message("La personne a été contactée en privé. ✅", ephemeral=True)
+
+            log_channel = bot.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                log_message = f"📨 {interaction.user.name}#{interaction.user.discriminator} a cliqué sur le bouton de contact du profil de {target.name}#{target.discriminator} à {time}"
+                if score is not None:
+                    log_message += f" | Compatibilité : {score}%"
+                    if score >= 90:
+                        log_message += " 💘 (Très haute compatibilité)"
+                    elif score < 30:
+                        log_message += " ⚠️ (Faible compatibilité)"
+                await log_channel.send(log_message)
+
         except:
             await interaction.response.send_message("Je n'ai pas pu envoyer de message privé.", ephemeral=True)
-
-class FormButtonView(View):
-    def __init__(self):
-        super().__init__(timeout=None)
-        self.add_item(FormButton())
 
 class ProfileView(View):
     def __init__(self, user_id):
@@ -96,6 +129,8 @@ class FormButton(Button):
                         answers[key] = msg.content
                         valid = True
 
+            user_answers[interaction.user.id] = answers
+
             genre = answers.get("genre", "").lower()
 
             if "fille" in genre:
@@ -129,12 +164,17 @@ class FormButton(Button):
             await message.add_reaction("❌")
 
             presentation_authors[message.id] = interaction.user.id
-            user_profiles[interaction.user.id] = embed  # sauvegarde du profil pour DM inversé
+            user_profiles[interaction.user.id] = embed
 
             await interaction.user.send("Ta présentation a été envoyée avec succès ! 💖")
 
         except Exception as e:
             await interaction.user.send(f"Une erreur est survenue : {e}")
+
+class FormButtonView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(FormButton())
 
 @bot.event
 async def on_ready():
@@ -149,15 +189,6 @@ async def on_ready():
         )
         embed.set_thumbnail(url=IMAGE_URL)
         await channel.send(embed=embed, view=FormButtonView())
-
-@bot.event
-async def on_reaction_add(reaction, user):
-    if user.bot:
-        return
-
-    message_id = reaction.message.id
-    if message_id in presentation_authors:
-        pass
 
 bot.run(TOKEN)
 
