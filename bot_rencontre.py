@@ -37,7 +37,7 @@ def calculate_compatibility(user_data, target_data):
     return round((match / total) * 100) if total > 0 else 0
 
 def get_embed_color(gender):
-    return discord.Color.blue() if gender.lower() == "garçon" else discord.Color.from_rgb(255, 105, 180)
+    return discord.Color.blue() if gender.lower() == "garçon" else discord.Color.from_rgb(20, 20, 20)
 
 class ProfileView(View):
     def __init__(self, user_id, image_url, embed_data):
@@ -45,15 +45,11 @@ class ProfileView(View):
         self.user_id = user_id
         self.image_url = image_url
         self.embed_data = embed_data
-        self.add_item(Button(label="Contacter cette personne", style=discord.ButtonStyle.success, custom_id="contact"))
-        self.add_item(Button(label="Signaler ce profil", style=discord.ButtonStyle.danger, custom_id="report"))
 
     @discord.ui.button(label="Contacter cette personne", style=discord.ButtonStyle.success, custom_id="contact")
     async def contact(self, interaction: discord.Interaction, button: discord.ui.Button):
         target_id = self.user_id
         sender = interaction.user
-        if sender.id == target_id:
-            return await interaction.response.send_message("Tu ne peux pas te contacter toi-même.", ephemeral=True)
 
         profiles = load_profiles()
         target_data = profiles.get(str(target_id))
@@ -61,6 +57,17 @@ class ProfileView(View):
 
         if not target_data:
             return await interaction.response.send_message("Ce profil n'existe plus ou est incomplet.", ephemeral=True)
+
+        # Vérif pointeur
+        if sender_data:
+            sender_age = int(sender_data.get("age", 0))
+            target_age = int(target_data.get("age", 0))
+            age_limit = (sender_age / 2) + 7
+            if target_age < age_limit:
+                now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                log_channel = interaction.client.get_channel(LOG_CHANNEL_ID)
+                await log_channel.send(f"⚠️ Alerte Pointeur : {sender.name}#{sender.discriminator} ({sender_age} ans) a tenté de contacter {target_data.get('prenom')} ({target_age} ans) à {now}")
+                return await interaction.response.send_message("L'écart d'âge est inhabituel. Merci de respecter autrui.", ephemeral=True)
 
         compat_text = ""
         if sender_data and target_data:
@@ -86,6 +93,10 @@ class ProfileView(View):
         except:
             await interaction.response.send_message("Impossible de contacter cette personne.", ephemeral=True)
 
+    @discord.ui.button(label="Signaler ce profil", style=discord.ButtonStyle.danger, custom_id="report")
+    async def report(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("Le profil a été signalé. Merci pour votre vigilance.", ephemeral=True)
+
 @bot.command()
 async def publier(ctx):
     def check_author(m):
@@ -106,8 +117,6 @@ async def publier(ctx):
 
     await ctx.send("Ton département ?")
     departement = (await bot.wait_for("message", check=check_author)).content.strip()
-    if not departement:
-        return await ctx.send("Département invalide.")
 
     await ctx.send("Ton genre (Fille / Garçon) ?")
     genre = (await bot.wait_for("message", check=check_author)).content.strip()
@@ -175,5 +184,4 @@ async def publier(ctx):
     await ctx.send("✅ Ton profil a bien été envoyé !")
 
 bot.run("VOTRE_TOKEN")
-
 
