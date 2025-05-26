@@ -8,8 +8,8 @@ from datetime import datetime
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-GIRLS_CHANNEL_ID = 123456789012345678  # à remplacer
-BOYS_CHANNEL_ID = 123456789012345678   # à remplacer
+GIRLS_CHANNEL_ID = 1362035175269077174  # à remplacer
+BOYS_CHANNEL_ID = 1362035179358781480   # à remplacer
 LOG_CHANNEL_ID = 1376347435747643475
 
 PROFILE_FILE = "profils.json"
