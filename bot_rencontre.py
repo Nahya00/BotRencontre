@@ -61,55 +61,54 @@ class FormButton(Button):
                 while not valid:
                     await interaction.user.send(question_text)
                     msg = await bot.wait_for('message', check=check, timeout=120)
+                    content = msg.content.strip()
 
-                    if key == "photo":
-                        if msg.attachments:
-                            answers[key] = msg.attachments[0].url
-                            valid = True
-                        elif msg.content.strip().lower() == "skip":
-                            answers[key] = ""
-                            valid = True
-                        elif msg.content.startswith("http"):
-                            answers[key] = msg.content.strip()
-                            valid = True
-                        else:
-                            await interaction.user.send("❌ Envoie un lien ou une image, ou écris `skip`.")
-                    elif key == "âge":
-                        if msg.content.isdigit():
-                            age = int(msg.content)
+                    if key == "âge":
+                        if content.isdigit():
+                            age = int(content)
                             if 15 <= age <= 35:
-                                answers[key] = msg.content
+                                answers[key] = content
                                 valid = True
                             else:
                                 await interaction.user.send("❌ Merci d’entrer un âge entre 15 et 35.")
                         else:
                             await interaction.user.send("❌ Merci de répondre uniquement par un chiffre pour l'âge !")
                     elif key == "genre":
-                        genre = msg.content.lower()
+                        genre = content.lower()
                         if genre in ["fille", "garçon", "garcon"]:
                             answers[key] = "Garçon" if genre.startswith("gar") else "Fille"
                             valid = True
                         else:
                             await interaction.user.send("❌ Merci de répondre uniquement **Fille** ou **Garçon** !")
+                    elif key == "photo" and msg.attachments:
+                        answers[key] = msg.attachments[0].url
+                        valid = True
+                    elif key == "photo" and content.lower() == "skip":
+                        valid = True
+                    elif key == "photo" and content.startswith("http"):
+                        answers[key] = content
+                        valid = True
+                    elif key == "photo":
+                        await interaction.user.send("❌ Envoie un lien ou une image, ou écris `skip`.")
                     else:
-                        answers[key] = msg.content.strip()
+                        answers[key] = content
                         valid = True
 
             user_answers[interaction.user.id] = answers
             genre = answers.get("genre", "").lower()
 
             if "fille" in genre:
-                color = discord.Color.from_str("#FF69B4")
+                color = discord.Color.dark_magenta()
                 title = "💖 Nouveau profil Fille !"
                 channel = bot.get_channel(FILLE_CHANNEL_ID)
             else:
-                color = discord.Color.from_str("#1E90FF")
+                color = discord.Color.dark_blue()
                 title = "💙 Nouveau profil Garçon !"
                 channel = bot.get_channel(GARCON_CHANNEL_ID)
 
             embed = discord.Embed(
                 title=title,
-                description="❖ Un nouveau profil vient d'apparaître...\n> Il y a des regards qui racontent plus que mille mots.",
+                description="❖ Un nouveau profil vient d'apparaître...\n\n> Il y a des regards qui racontent plus que mille mots.",
                 color=color
             )
             embed.set_author(name=interaction.user.name + "#" + interaction.user.discriminator, icon_url=interaction.user.avatar.url if interaction.user.avatar else None)
@@ -122,21 +121,20 @@ class FormButton(Button):
             embed.add_field(name="Recherche chez quelqu'un", value=answers['recherche_chez_autrui'], inline=False)
             embed.add_field(name="Passions", value=answers['passions'], inline=False)
             embed.add_field(name="Description", value=answers['description'], inline=False)
-            thumbnail_url = answers['photo'] if answers['photo'] else IMAGE_URL
+            thumbnail_url = answers['photo'] if 'photo' in answers and answers['photo'].startswith('http') else IMAGE_URL
             embed.set_thumbnail(url=thumbnail_url)
 
             message = await channel.send(embed=embed)
             await message.add_reaction("✅")
             await message.add_reaction("❌")
-            await message.add_reaction("🙂")
 
             presentation_authors[message.id] = interaction.user.id
-            user_profiles[interaction.user.id] = answers
+            user_profiles[interaction.user.id] = embed
 
-            await interaction.user.send("✅ Ton profil a bien été envoyé !")
+            await interaction.user.send("Ta présentation a été envoyée avec succès ! 💖")
 
         except Exception as e:
-            await interaction.user.send(f"❌ Une erreur est survenue : {e}")
+            await interaction.user.send(f"❌ Une erreur est survenue pendant ta présentation : {e}")
 
 class FormButtonView(View):
     def __init__(self):
@@ -149,8 +147,8 @@ async def on_ready():
     channel = bot.get_channel(ACCUEIL_CHANNEL_ID)
     if channel:
         embed = discord.Embed(
-            title="💖 Fais des rencontres ici !",
-            description="Bienvenue sur notre espace rencontre !\nClique sur le bouton ci-dessous pour remplir ta fiche et te présenter aux autres.\n\nQue l'amour ou l'amitié commence ! ❤️",
+            title="🖤 Bienvenue dans l'antre des âmes liées...",
+            description="> Viens glisser ton histoire parmi les regards silencieux.\n> Clique sur le bouton ci-dessous pour déposer ton profil, et laisse le destin s'en mêler.",
             color=discord.Color.from_str("#000000")
         )
         embed.set_thumbnail(url=IMAGE_URL)
