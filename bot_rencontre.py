@@ -87,6 +87,65 @@ class FormButton(Button):
                         valid = True
 
             user_answers[interaction.user.id] = answers
-            # Ensuite la logique continue avec l'embed etc...
+            genre = answers.get("genre", "").lower()
+
+            if "fille" in genre:
+                color = discord.Color.from_str("#000000")
+                title = "🖤 Nouveau profil Fille !"
+                channel = bot.get_channel(FILLE_CHANNEL_ID)
+            else:
+                color = discord.Color.from_str("#000000")
+                title = "🖤 Nouveau profil Garçon !"
+                channel = bot.get_channel(GARCON_CHANNEL_ID)
+
+            embed = discord.Embed(
+                title=title,
+                description=f"❖ Un nouveau profil vient d'apparaître...
+
+> “Il y a des regards qui racontent plus que mille mots.”",
+                color=color
+            )
+            embed.set_author(name=interaction.user.name + "#" + interaction.user.discriminator, icon_url=interaction.user.avatar.url if interaction.user.avatar else None)
+            embed.add_field(name="Prénom", value=answers['prénom'], inline=True)
+            embed.add_field(name="Âge", value=answers['âge'], inline=True)
+            embed.add_field(name="Département", value=answers['département'], inline=True)
+            embed.add_field(name="Genre", value=answers['genre'], inline=True)
+            embed.add_field(name="Orientation", value=answers['orientation'], inline=True)
+            embed.add_field(name="Recherche sur le serveur", value=answers['recherche'], inline=False)
+            embed.add_field(name="Recherche chez quelqu'un", value=answers['recherche_chez_autrui'], inline=False)
+            embed.add_field(name="Passions", value=answers['passions'], inline=False)
+            embed.add_field(name="Description", value=answers['description'], inline=False)
+            embed.set_thumbnail(url=IMAGE_URL)
+
+            message = await channel.send(embed=embed)
+            await message.add_reaction("✅")
+            await message.add_reaction("❌")
+
+            presentation_authors[message.id] = interaction.user.id
+            user_profiles[interaction.user.id] = embed
+
+            await interaction.user.send("Ta présentation a été envoyée avec succès ! 💖")
+
+class FormButtonView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(FormButton())
+
+@bot.event
+async def on_ready():
+    print(f"Connecté en tant que {bot.user}")
+    channel = bot.get_channel(ACCUEIL_CHANNEL_ID)
+    if channel:
+        embed = discord.Embed(
+            title="🖤 Bienvenue dans l'antre des âmes liées...",
+            description="> Viens glisser ton histoire parmi les regards silencieux.
+> Clique sur le bouton ci-dessous pour déposer ton profil, et laisse le destin s’en mêler.",
+            color=discord.Color.from_str("#000000")
+        )
+        embed.set_thumbnail(url=IMAGE_URL)
+        await channel.send(embed=embed, view=FormButtonView())
+
         except Exception as e:
             await interaction.user.send(f"Une erreur est survenue : {e}")
+
+bot.run(TOKEN)
