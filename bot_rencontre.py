@@ -11,14 +11,12 @@ intents.messages = True
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-
 TOKEN = os.getenv("TOKEN")
 
 ACCUEIL_CHANNEL_ID = 1362035171301527654
 FILLE_CHANNEL_ID = 1362035175269077174
 GARCON_CHANNEL_ID = 1362035179358781480
 LOG_CHANNEL_ID = 1376347435747643475
-
 IMAGE_URL = "https://i.imgur.com/FQ4zDtv.gif"
 
 presentation_authors = {}
@@ -46,43 +44,57 @@ class DMButton(Button):
 
         contact_clicks[user_id] += 1
         target = await bot.fetch_user(self.user_id)
+        success = False
         score = None
-        if user_id in user_profiles:
-            reverse_embed = user_profiles[user_id]
-            try:
-                if target.dm_channel is None:
-                    await target.create_dm()
-                await target.send(f"{interaction.user.name}#{interaction.user.discriminator} souhaite te contacter.")
-                await target.send(embed=reverse_embed)
+
+        try:
+            if user_id in user_profiles:
+                reverse_embed = user_profiles[user_id]
 
                 if self.user_id in user_answers and user_id in user_answers:
                     score = calculate_compatibility(user_answers[self.user_id], user_answers[user_id])
+
+                await target.send(f"{interaction.user.name}#{interaction.user.discriminator} souhaite te contacter.")
+                await target.send(embed=reverse_embed)
+
+                if score is not None:
                     await target.send(f"🔮 Niveau de compatibilité estimé : {score}%")
                     if score >= 90:
                         await target.send("💘 Waouh ! Vous avez une connexion presque parfaite...")
                     elif score < 30:
                         await target.send("⚠️ Le destin semble capricieux... Faible compatibilité constatée.")
+                success = True
+        except:
+            log_channel = bot.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                await log_channel.send(f"⚠️ Impossible d’envoyer le DM de notification à {target.name}#{target.discriminator} à {time} malgré une tentative de contact.")
 
+        try:
+            if success:
                 await interaction.response.send_message(f"✅ Le message a bien été envoyé à {target.name}#{target.discriminator}.", ephemeral=True)
-
-                log_channel = bot.get_channel(LOG_CHANNEL_ID)
-                if log_channel:
-                    time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                    log_message = f"📨 {interaction.user.name}#{interaction.user.discriminator} a cliqué sur le bouton de contact du profil de {target.name}#{target.discriminator} à {time}"
-                    if score is not None:
-                        log_message += f" | Compatibilité : {score}%"
-                        if score >= 90:
-                            log_message += " 💘 (Très haute compatibilité)"
-                        elif score < 30:
-                            log_message += " ⚠️ (Faible compatibilité)"
-                    await log_channel.send(log_message)
-
-            except:
-                log_channel = bot.get_channel(LOG_CHANNEL_ID)
-                if log_channel:
-                    time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                    await log_channel.send(f"⚠️ Impossible d’envoyer le DM de notification à {target.name}#{target.discriminator} (contacté par {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}) à {time} malgré une tentative de contact.")
+            else:
                 await interaction.response.send_message("❌ Impossible de contacter cette personne, ses messages privés sont fermés ou refusés.", ephemeral=True)
+        except:
+            pass
+
+        try:
+            log_channel = bot.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                log_message = f"📨 {interaction.user.name}#{interaction.user.discriminator} a cliqué sur le bouton de contact du profil de {target.name}#{target.discriminator} à {time}"
+                if score is not None:
+                    log_message += f" | Compatibilité : {score}%"
+                    if score >= 90:
+                        log_message += " 💘 (Très haute compatibilité)"
+                    elif score < 30:
+                        log_message += " ⚠️ (Faible compatibilité)"
+                await log_channel.send(log_message)
+        except Exception as e:
+            try:
+                await interaction.response.send_message(f"❌ Une erreur est survenue : {e}", ephemeral=True)
+            except:
+                pass
 
 class ProfileView(View):
     def __init__(self, user_id):
@@ -182,7 +194,6 @@ class FormButtonView(View):
 @bot.event
 async def on_ready():
     print(f"Connecté en tant que {bot.user}")
-
     channel = bot.get_channel(ACCUEIL_CHANNEL_ID)
     if channel:
         embed = discord.Embed(
@@ -194,3 +205,4 @@ async def on_ready():
         await channel.send(embed=embed, view=FormButtonView())
 
 bot.run(TOKEN)
+
