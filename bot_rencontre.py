@@ -46,21 +46,13 @@ class DMButton(Button):
 
         contact_clicks[user_id] += 1
         target = await bot.fetch_user(self.user_id)
-        try:
-            await interaction.user.send(f"Tu as demandé à contacter {target.name}#{target.discriminator}. Voici son profil :")
-            await interaction.user.send(target.mention)
-
-            score = None
-            if user_id in user_profiles:
-                reverse_embed = user_profiles[user_id]
-                try:
+        score = None
+        if user_id in user_profiles:
+            reverse_embed = user_profiles[user_id]
+            try:
+                if target.dm_channel is None:
+                    await target.create_dm()
                 await target.send(f"{interaction.user.name}#{interaction.user.discriminator} souhaite te contacter.")
-            except:
-                log_channel = bot.get_channel(LOG_CHANNEL_ID)
-                if log_channel:
-                    time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                    await log_channel.send(f"⚠️ Impossible d’envoyer le DM de notification à {target.name}#{target.discriminator} à {time} malgré une tentative de contact.")
-                return
                 await target.send(embed=reverse_embed)
 
                 if self.user_id in user_answers and user_id in user_answers:
@@ -71,32 +63,26 @@ class DMButton(Button):
                     elif score < 30:
                         await target.send("⚠️ Le destin semble capricieux... Faible compatibilité constatée.")
 
-            await interaction.response.send_message("La personne a été contactée en privé. ✅", ephemeral=True)
+                await interaction.response.send_message(f"✅ Le message a bien été envoyé à {target.name}#{target.discriminator}.", ephemeral=True)
 
-            log_channel = bot.get_channel(LOG_CHANNEL_ID)
-            if log_channel:
-                time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                log_message = f"📨 {interaction.user.name}#{interaction.user.discriminator} a cliqué sur le bouton de contact du profil de {target.name}#{target.discriminator} à {time}"
-                if score is not None:
-                    log_message += f" | Compatibilité : {score}%"
-                    if score >= 90:
-                        log_message += " 💘 (Très haute compatibilité)"
-                    elif score < 30:
-                        log_message += " ⚠️ (Faible compatibilité)"
-                await log_channel.send(log_message)
+                log_channel = bot.get_channel(LOG_CHANNEL_ID)
+                if log_channel:
+                    time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    log_message = f"📨 {interaction.user.name}#{interaction.user.discriminator} a cliqué sur le bouton de contact du profil de {target.name}#{target.discriminator} à {time}"
+                    if score is not None:
+                        log_message += f" | Compatibilité : {score}%"
+                        if score >= 90:
+                            log_message += " 💘 (Très haute compatibilité)"
+                        elif score < 30:
+                            log_message += " ⚠️ (Faible compatibilité)"
+                    await log_channel.send(log_message)
 
-        except:
-            log_channel = bot.get_channel(LOG_CHANNEL_ID)
-            if log_channel:
-                time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                await log_channel.send(f"⚠️ Échec d'envoi de DM à {target.name}#{target.discriminator} depuis {interaction.user.name}#{interaction.user.discriminator} à {time}. DM probablement bloqué.")
-
-            await interaction.response.send_message("❌ Impossible de contacter cette personne, ses messages privés sont fermés ou refusés.", ephemeral=True)
-            log_channel = bot.get_channel(LOG_CHANNEL_ID)
-            if log_channel:
-                time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                log_message = f"❌ {interaction.user.name}#{interaction.user.discriminator} a tenté de contacter {target.name}#{target.discriminator} à {time}, mais les DM étaient fermés."
-                await log_channel.send(log_message)
+            except:
+                log_channel = bot.get_channel(LOG_CHANNEL_ID)
+                if log_channel:
+                    time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    await log_channel.send(f"⚠️ Impossible d’envoyer le DM de notification à {target.name}#{target.discriminator} (contacté par {interaction.user.name}#{interaction.user.discriminator}, ID: {interaction.user.id}) à {time} malgré une tentative de contact.")
+                await interaction.response.send_message("❌ Impossible de contacter cette personne, ses messages privés sont fermés ou refusés.", ephemeral=True)
 
 class ProfileView(View):
     def __init__(self, user_id):
@@ -208,4 +194,3 @@ async def on_ready():
         await channel.send(embed=embed, view=FormButtonView())
 
 bot.run(TOKEN)
-
