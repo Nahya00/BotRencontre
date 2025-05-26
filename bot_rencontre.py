@@ -100,12 +100,9 @@ class FormButton(Button):
 
             embed = discord.Embed(
                 title=title,
-                description=(
-    "❖ Un nouveau profil vient d'apparaître...
+                description="❖ Un nouveau profil vient d'apparaître...
 
-"
-    "> “Il y a des regards qui racontent plus que mille mots.”"
-),
+> “Il y a des regards qui racontent plus que mille mots.”",
                 color=color
             )
             embed.set_author(name=interaction.user.name + "#" + interaction.user.discriminator, icon_url=interaction.user.avatar.url if interaction.user.avatar else None)
@@ -141,11 +138,8 @@ async def on_ready():
     if channel:
         embed = discord.Embed(
             title="🖤 Bienvenue dans l'antre des âmes liées...",
-            description=(
-                "> Viens glisser ton histoire parmi les regards silencieux.
-"
-                "> Clique sur le bouton ci-dessous pour déposer ton profil, et laisse le destin s’en mêler."
-            ),
+            description="> Viens glisser ton histoire parmi les regards silencieux.
+> Clique sur le bouton ci-dessous pour déposer ton profil, et laisse le destin s’en mêler.",
             color=discord.Color.from_str("#000000")
         )
         embed.set_thumbnail(url=IMAGE_URL)
