@@ -100,7 +100,7 @@ class FormButton(Button):
 
             embed = discord.Embed(
                 title=title,
-                ddescription="❖ Un nouveau profil vient d'apparaître...\n\n> Il y a des regards qui racontent plus que mille mots.",
+                description="❖ Un nouveau profil vient d'apparaître...\n\n> Il y a des regards qui racontent plus que mille mots.",
                 color=color
             )
             embed.set_author(name=interaction.user.name + "#" + interaction.user.discriminator, icon_url=interaction.user.avatar.url if interaction.user.avatar else None)
