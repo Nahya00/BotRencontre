@@ -123,7 +123,8 @@ class FormButton(Button):
             user_profiles[interaction.user.id] = embed
 
             await interaction.user.send("Ta présentation a été envoyée avec succès ! 💖")
-
+        except Exception as e:
+            await interaction.user.send(f"❌ Une erreur est survenue pendant ta présentation : {e}")
 class FormButtonView(View):
     def __init__(self):
         super().__init__(timeout=None)
