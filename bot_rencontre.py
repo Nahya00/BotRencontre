@@ -45,7 +45,6 @@ class ProfileView(View):
         self.user_id = user_id
         self.image_url = image_url
         self.embed_data = embed_data
-
         self.add_item(Button(label="Contacter cette personne", style=discord.ButtonStyle.success, custom_id="contact"))
         self.add_item(Button(label="Signaler ce profil", style=discord.ButtonStyle.danger, custom_id="report"))
 
@@ -60,15 +59,16 @@ class ProfileView(View):
         target_data = profiles.get(str(target_id))
         sender_data = profiles.get(str(sender.id))
 
+        if not target_data:
+            return await interaction.response.send_message("Ce profil n'existe plus ou est incomplet.", ephemeral=True)
+
         compat_text = ""
-        if target_data and sender_data:
+        if sender_data and target_data:
             compat = calculate_compatibility(sender_data, target_data)
             if compat >= 90:
                 compat_text = f" | Compatibilité : {compat}% ✅ (Très bonne compatibilité)"
             elif compat > 0:
                 compat_text = f" | Compatibilité : {compat}% ⚠️ (Faible compatibilité)"
-            else:
-                compat_text = ""
 
         try:
             await sender.send(f"Tu as demandé à contacter <@{target_id}>. Attends sa réponse !")
@@ -92,7 +92,9 @@ async def publier(ctx):
         return m.author == ctx.author and m.channel == ctx.channel
 
     await ctx.send("Quel est ton prénom ?")
-    prenom = (await bot.wait_for("message", check=check_author)).content
+    prenom = (await bot.wait_for("message", check=check_author)).content.strip()
+    if len(prenom) < 2:
+        return await ctx.send("Prénom trop court.")
 
     await ctx.send("Quel est ton âge ? (entre 15 et 35)")
     age_msg = await bot.wait_for("message", check=check_author)
@@ -103,25 +105,27 @@ async def publier(ctx):
         return await ctx.send("Âge hors limites autorisées.")
 
     await ctx.send("Ton département ?")
-    departement = (await bot.wait_for("message", check=check_author)).content
+    departement = (await bot.wait_for("message", check=check_author)).content.strip()
+    if not departement:
+        return await ctx.send("Département invalide.")
 
     await ctx.send("Ton genre (Fille / Garçon) ?")
-    genre = (await bot.wait_for("message", check=check_author)).content
+    genre = (await bot.wait_for("message", check=check_author)).content.strip()
 
     await ctx.send("Ton orientation ?")
-    orientation = (await bot.wait_for("message", check=check_author)).content
+    orientation = (await bot.wait_for("message", check=check_author)).content.strip()
 
     await ctx.send("Que recherches-tu sur ce serveur ?")
-    recherche = (await bot.wait_for("message", check=check_author)).content
+    recherche = (await bot.wait_for("message", check=check_author)).content.strip()
 
     await ctx.send("Que recherches-tu chez quelqu’un ?")
-    recherche_chez = (await bot.wait_for("message", check=check_author)).content
+    recherche_chez = (await bot.wait_for("message", check=check_author)).content.strip()
 
     await ctx.send("Tes passions ?")
-    passions = (await bot.wait_for("message", check=check_author)).content
+    passions = (await bot.wait_for("message", check=check_author)).content.strip()
 
     await ctx.send("Fais une petite description de toi :")
-    description = (await bot.wait_for("message", check=check_author)).content
+    description = (await bot.wait_for("message", check=check_author)).content.strip()
 
     await ctx.send("Envoie un lien ou une image, ou écris `skip`. Si tu veux, tu peux envoyer une **photo** en pièce jointe ou lien. Sinon, écris `skip`.")
     img_msg = await bot.wait_for("message", check=check_author)
@@ -171,4 +175,5 @@ async def publier(ctx):
     await ctx.send("✅ Ton profil a bien été envoyé !")
 
 bot.run("VOTRE_TOKEN")
+
 
