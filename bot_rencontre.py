@@ -53,7 +53,7 @@ class DMButton(Button):
             score = None
             if user_id in user_profiles:
                 reverse_embed = user_profiles[user_id]
-                await target.send(f"{interaction.user.name}#{interaction.user.discriminator} souhaite te contacter. Voici son profil :")
+                await target.send(f"{interaction.user.name}#{interaction.user.discriminator} souhaite te contacter.")
                 await target.send(embed=reverse_embed)
 
                 if self.user_id in user_answers and user_id in user_answers:
@@ -196,3 +196,4 @@ async def on_ready():
         await channel.send(embed=embed, view=FormButtonView())
 
 bot.run(TOKEN)
+
