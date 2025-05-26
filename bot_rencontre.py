@@ -53,7 +53,14 @@ class DMButton(Button):
             score = None
             if user_id in user_profiles:
                 reverse_embed = user_profiles[user_id]
+                try:
                 await target.send(f"{interaction.user.name}#{interaction.user.discriminator} souhaite te contacter.")
+            except:
+                log_channel = bot.get_channel(LOG_CHANNEL_ID)
+                if log_channel:
+                    time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                    await log_channel.send(f"⚠️ Impossible d’envoyer le DM de notification à {target.name}#{target.discriminator} à {time} malgré une tentative de contact.")
+                return
                 await target.send(embed=reverse_embed)
 
                 if self.user_id in user_answers and user_id in user_answers:
@@ -79,6 +86,11 @@ class DMButton(Button):
                 await log_channel.send(log_message)
 
         except:
+            log_channel = bot.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                time = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+                await log_channel.send(f"⚠️ Échec d'envoi de DM à {target.name}#{target.discriminator} depuis {interaction.user.name}#{interaction.user.discriminator} à {time}. DM probablement bloqué.")
+
             await interaction.response.send_message("❌ Impossible de contacter cette personne, ses messages privés sont fermés ou refusés.", ephemeral=True)
             log_channel = bot.get_channel(LOG_CHANNEL_ID)
             if log_channel:
