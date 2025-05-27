@@ -134,9 +134,7 @@ async def creer_profil(user, interaction):
 async def poster_profil(interaction, user, data, image_url):
     embed = discord.Embed(
         title=f"{'💖' if data['Genre'].lower() == 'fille' else '💙'} Nouveau profil {'Fille' if data['Genre'].lower() == 'fille' else 'Garçon'} !",
-        description="❖ Un nouveau profil vient d'apparaître...
-
-> Il y a des regards qui racontent plus que mille mots.",
+        description="❖ Un nouveau profil vient d'apparaître...\n> Il y a des regards qui racontent plus que mille mots.",
         color=discord.Color.dark_gray()
     )
     embed.add_field(name="Prénom", value=data['Prénom'], inline=False)
