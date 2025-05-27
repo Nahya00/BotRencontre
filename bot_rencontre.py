@@ -98,9 +98,7 @@ class ProfilView(View):
             try:
                 await interaction.user.send(f"📬 Tu as demandé à contacter {auteur.mention}.")
                 await auteur.send(f"📬 {interaction.user.mention} souhaite te contacter !")
-            except:
-                pass
-                # --- Compatibilité ---
+                  # --- Compatibilité ---
 data1 = profils.get(interaction.user.id)
 data2 = profils.get(self.auteur_id)
 
@@ -134,6 +132,8 @@ if data1 and data2:
     await interaction.user.send(embed=compat_embed)
 else:
     await interaction.user.send("⚠️ L’un de vous deux n’a pas encore rempli de profil, compatibilité impossible.")
+            except:
+                pass
 
         logs = bot.get_channel(CHANNEL_LOGS)
         if logs:
