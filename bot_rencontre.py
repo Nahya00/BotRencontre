@@ -11,16 +11,15 @@ CHANNEL_FILLE = 1362035175269077174
 CHANNEL_GARCON = 1362035179358781480
 CHANNEL_LOGS = 1376347435747643475
     
-    intents = discord.Intents.all()
-    bot = commands.Bot(command_prefix="!", intents=intents)
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix="!", intents=intents)
     
-    profils = {}
-    
+profils = {}
     class StartProfilButton(Button):
         def __init__(self):
             super().__init__(label="Remplir mon profil", style=discord.ButtonStyle.primary, custom_id="start_profil")
     
-        async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: discord.Interaction):
             channel = await interaction.user.create_dm()
             await channel.send("Salut ! On va remplir ta présentation.\nEnvoie une image ou un lien, ou écris `skip`.")
     
