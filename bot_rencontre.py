@@ -190,4 +190,98 @@ async def poster_profil(interaction, data, image_url):
         f"📝 Profil publié par {interaction.user} à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} | ID: {interaction.user.id}"
     )
 
+async def poster_profil(interaction, profil_data, image_url):
+    age = int(profil_data["Âge"])
+    genre = profil_data["Genre"].lower()
+
+    channel_id = CHANNEL_FILLE if "fille" in genre else CHANNEL_GARCON
+    channel = bot.get_channel(channel_id)
+    logs_channel = bot.get_channel(CHANNEL_LOGS)
+
+    # Théorème du pointeur
+    minimum_age = int((age / 2) + 7)
+
+    embed = discord.Embed(
+        title=f"{'💖' if genre == 'fille' else '💙'} Nouveau profil {'Fille' if genre == 'fille' else 'Garçon'} !",
+        description="❖ Un nouveau profil vient d’apparaître...\n\n> Il y a des regards qui racontent plus que mille mots.",
+        color=discord.Color.dark_purple()
+    )
+
+    embed.add_field(name="**Prénom**", value=profil_data["Prénom"], inline=False)
+    embed.add_field(name="**Âge**", value=profil_data["Âge"], inline=True)
+    embed.add_field(name="**Département**", value=profil_data["Département"], inline=True)
+    embed.add_field(name="**Genre**", value=profil_data["Genre"], inline=True)
+    embed.add_field(name="**Orientation**", value=profil_data["Orientation"], inline=True)
+    embed.add_field(name="**Recherche sur le serveur**", value=profil_data["Recherche"], inline=False)
+    embed.add_field(name="**Recherche chez quelqu'un**", value=profil_data["Recherche chez quelqu'un"], inline=False)
+    embed.add_field(name="**Passions**", value=profil_data["Passions"], inline=False)
+    embed.add_field(name="**Description**", value=profil_data["Description"], inline=False)
+
+    if image_url:
+        embed.set_thumbnail(url=image_url)
+
+    embed.set_author(name=f"{interaction.user.name}#{interaction.user.discriminator}",
+                     icon_url=interaction.user.avatar.url if interaction.user.avatar else None)
+
+    view = ProfilView(interaction.user.id)
+    msg = await channel.send(embed=embed, view=view)
+
+    await logs_channel.send(
+        f"📩 {interaction.user.mention} a publié un profil à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}.\n"
+        f"Message ID : {msg.id}"
+    )
+
+class ProfilView(View):
+    def __init__(self, auteur_id):
+        super().__init__(timeout=None)
+        self.auteur_id = auteur_id
+
+    @discord.ui.button(label="Contacter cette personne", style=discord.ButtonStyle.success)
+    async def contacter(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id == self.auteur_id:
+            await interaction.response.send_message("❌ Tu ne peux pas te contacter toi-même.", ephemeral=True)
+            return
+
+        auteur_profil = profils.get(self.auteur_id)
+        contacteur_profil = profils.get(interaction.user.id)
+        logs_channel = bot.get_channel(CHANNEL_LOGS)
+
+        if not auteur_profil:
+            await interaction.response.send_message("❌ Données de profil introuvables.", ephemeral=True)
+            return
+
+        compatibilite = "Inconnue"
+        if contacteur_profil:
+            age1, age2 = int(contacteur_profil["Âge"]), int(auteur_profil["Âge"])
+            moyenne = (age1 + age2) / 2
+            diff = abs(age1 - age2)
+            pourcentage = max(0, 100 - int((diff / moyenne) * 100))
+            compatibilite = f"{pourcentage}% {'✅ Très bonne compatibilité !' if pourcentage >= 90 else '⚠️ (Faible compatibilité)'}"
+        else:
+            pourcentage = 0
+
+        try:
+            await interaction.user.send(f"Tu as contacté {auteur_profil['Prénom']} !")
+            user = await bot.fetch_user(self.auteur_id)
+            await user.send(f"{interaction.user.name}#{interaction.user.discriminator} a demandé à te contacter !")
+            await interaction.response.send_message("✅ Contact envoyé !", ephemeral=True)
+        except:
+            await interaction.response.send_message("❌ Impossible d’envoyer le message.", ephemeral=True)
+
+        await logs_channel.send(
+            f"📩 {interaction.user.name}#{interaction.user.discriminator} a cliqué sur le bouton de contact "
+            f"du profil de <@{self.auteur_id}> à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n"
+            f"Compatibilité : {compatibilite}"
+        )
+
+    @discord.ui.button(label="Signaler ce profil", style=discord.ButtonStyle.danger)
+    async def signaler(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.send_message("⚠️ Le profil a été signalé à la modération.", ephemeral=True)
+        logs_channel = bot.get_channel(CHANNEL_LOGS)
+        await logs_channel.send(
+            f"🚨 {interaction.user.name}#{interaction.user.discriminator} a signalé le profil de <@{self.auteur_id}> "
+            f"à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+        )
+
+
 bot.run(TOKEN)
