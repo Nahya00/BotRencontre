@@ -100,10 +100,10 @@ async def on_ready():
         embed.set_author(name="Système de Rencontre", icon_url=bot.user.avatar.url if bot.user.avatar else None)
         await accueil_channel.send(embed=embed, view=StartProfilView())
         class ProfilView(View):
+   class ProfilView(View):
     def __init__(self, auteur_id):
         super().__init__(timeout=None)
-        self.add_item(ContactButton(auteur_id))
-        self.add_item(ReportButton())
+        self.auteur_id = auteur_id
 
 class ContactButton(Button):
     def __init__(self, cible_id):
