@@ -1,217 +1,193 @@
-
 import discord
 from discord.ext import commands
-from discord.ui import View, Button
-from discord import app_commands
-import os
-from dotenv import load_dotenv
+from discord.ui import Button, View
 from datetime import datetime
+from dotenv import load_dotenv
+import os
 
 load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv("TOKEN")
 
-LOG_CHANNEL_ID = 1376347435747643475
-GIRLS_CHANNEL_ID = 1362035175269077174
-BOYS_CHANNEL_ID = 1362035179358781480
-WELCOME_CHANNEL_ID = 1362035171301527654
+CHANNEL_FILLE = 1362035175269077174
+CHANNEL_GARCON = 1362035179358781480
+CHANNEL_LOGS = 1376347435747643475
+CHANNEL_ACCUEIL = 1362035171301527654
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
-tree = bot.tree
 
-user_profiles = {}
-presentation_authors = {}
+profils = {}
 contact_clicks = {}
 
-@bot.event
-async def on_ready():
-    await tree.sync()
-    print(f"Connecté en tant que {bot.user}")
-    channel = bot.get_channel(WELCOME_CHANNEL_ID)
-    if channel:
-        embed = discord.Embed(
-            title="Bienvenue sur le système de rencontre",
-            description="Remplis ton profil pour apparaître dans les profils mystères et rencontrer d'autres membres.",
-            color=discord.Color.from_rgb(15, 15, 15)
-        )
-        embed.set_author(name="Formulaire Rencontre", icon_url=bot.user.avatar.url if bot.user.avatar else None)
-        embed.set_footer(text="Clique sur le bouton ci-dessous pour commencer.")
-        view = View()
-        view.add_item(Button(label="Remplir mon profil", style=discord.ButtonStyle.primary, custom_id="start_profil"))
-
-        async for msg in channel.history(limit=10):
-            if msg.author == bot.user:
-                await msg.delete()
-        await channel.send(embed=embed, view=view)
-def calculate_compatibility(sender, receiver):
-    champs = ["recherche", "recherche_chez", "passions"]
-    match = sum(1 for champ in champs if sender.get(champ, '').lower() == receiver.get(champ, '').lower())
-    return round((match / len(champs)) * 100)
-
-def age_gap_invalid(sender_age, receiver_age):
-    return sender_age < ((receiver_age / 2) + 7)
-
-class ContactButton(Button):
-    def __init__(self, profile_user_id):
-        super().__init__(label="Contacter cette personne", style=discord.ButtonStyle.success)
-        self.profile_user_id = profile_user_id
-
-    async def callback(self, interaction: discord.Interaction):
-        sender = interaction.user
-        receiver_id = self.profile_user_id
-        receiver_data = user_profiles.get(receiver_id)
-        sender_data = user_profiles.get(sender.id)
-
-        now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        log_channel = bot.get_channel(LOG_CHANNEL_ID)
-
-        if not receiver_data:
-            return await interaction.response.send_message("Profil introuvable.", ephemeral=True)
-
-        if sender.id == receiver_id:
-            return await interaction.response.send_message("Tu ne peux pas te contacter toi-même.", ephemeral=True)
-
-        contact_clicks.setdefault(sender.id, [])
-        if receiver_id in contact_clicks[sender.id]:
-            return await interaction.response.send_message("Tu as déjà contacté cette personne.", ephemeral=True)
-        if len(contact_clicks[sender.id]) >= 3:
-            return await interaction.response.send_message("Tu as atteint la limite de 3 profils contactés.", ephemeral=True)
-
-        contact_clicks[sender.id].append(receiver_id)
-
-        compat_txt = "Compatibilité : inconnue (profil non rempli par le demandeur)"
-        if sender_data:
-            compat = calculate_compatibility(sender_data, receiver_data)
-            if age_gap_invalid(sender_data['âge'], receiver_data['âge']):
-                if log_channel:
-                    await log_channel.send(f"⚠️ Alerte Pointeur : {sender.name}#{sender.discriminator} ({sender_data['âge']}) → {receiver_data['prénom']} ({receiver_data['âge']}) à {now}")
-                return await interaction.response.send_message("Écart d’âge trop important. Respecte autrui.", ephemeral=True)
-            if compat >= 90:
-                compat_txt = f"Compatibilité : {compat}% ✅ Très bonne compatibilité"
-            elif compat <= 30:
-                compat_txt = f"Compatibilité : {compat}% ⚠️ Faible compatibilité"
-            else:
-                compat_txt = f"Compatibilité : {compat}%"
-
-        try:
-            await bot.get_user(receiver_id).send(f"📬 {sender.name}#{sender.discriminator} souhaite te contacter !")
-        except:
-            pass
-        try:
-            await sender.send(f"Tu as contacté {receiver_data['prénom']} — {compat_txt}")
-        except:
-            await interaction.response.send_message("Demande envoyée. Impossible de te DM.", ephemeral=True)
-
-        if log_channel:
-            await log_channel.send(f"📩 {sender.name}#{sender.discriminator} a cliqué sur [Contacter cette personne] pour {receiver_data['prénom']} à {now} — {compat_txt}")
-
-        await interaction.response.send_message("✅ Demande envoyée !", ephemeral=True)
-
-class ReportButton(Button):
-    def __init__(self):
-        super().__init__(label="Signaler ce profil", style=discord.ButtonStyle.danger)
-
-    async def callback(self, interaction: discord.Interaction):
-        await interaction.response.send_message("Profil signalé. Merci.", ephemeral=True)
-        log_channel = bot.get_channel(LOG_CHANNEL_ID)
-        if log_channel:
-            now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-            await log_channel.send(f"🚨 {interaction.user.name}#{interaction.user.discriminator} a signalé un profil à {now}.")
-
-class ProfileView(View):
-    def __init__(self, user_id):
-        super().__init__(timeout=None)
-        self.add_item(ContactButton(user_id))
-        self.add_item(ReportButton())
-class StartProfileButton(Button):
+class StartProfilButton(Button):
     def __init__(self):
         super().__init__(label="Remplir mon profil", style=discord.ButtonStyle.primary, custom_id="start_profil")
 
+    async def callback(self, interaction: discord.Interaction):
+        await create_profile(interaction)
+
+class StartProfilView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(StartProfilButton())
+
+@bot.event
+async def on_ready():
+    print(f"Connecté en tant que {bot.user}")
+    accueil_channel = bot.get_channel(CHANNEL_ACCUEIL)
+    if accueil_channel:
+        embed = discord.Embed(
+            title="Rencontre Mystère Noctys",
+            description="**Clique ci-dessous pour créer ton profil anonyme.**\nLes regards ne mentent jamais...",
+            color=discord.Color.from_rgb(20, 20, 20)
+        )
+        embed.set_footer(text="Noctys • Ambiance mystique")
+        embed.set_author(name="Système de Rencontre", icon_url=bot.user.avatar.url if bot.user.avatar else None)
+        await accueil_channel.purge(limit=5)
+        await accueil_channel.send(embed=embed, view=StartProfilView())
 async def create_profile(interaction: discord.Interaction):
     def check(m): return m.author.id == interaction.user.id and m.channel == interaction.channel
 
-    await interaction.response.send_message("Quel est ton prénom ?", ephemeral=True)
-    prenom = (await bot.wait_for("message", check=check)).content.strip()
+    await interaction.response.send_message("Envoie une **image** (ou `skip` pour passer)", ephemeral=True)
+    try:
+        msg = await bot.wait_for("message", check=check, timeout=120)
+        if msg.attachments:
+            image_url = msg.attachments[0].url
+        elif msg.content.lower().startswith("http"):
+            image_url = msg.content.strip()
+        elif msg.content.lower() == "skip":
+            image_url = None
+        else:
+            await interaction.followup.send("❌ Envoie une image, un lien ou tape `skip`.", ephemeral=True)
+            return
+    except:
+        await interaction.followup.send("⛔ Temps dépassé ou erreur.", ephemeral=True)
+        return
 
-    await interaction.followup.send("Ton âge (15-35) ?", ephemeral=True)
-    while True:
-        age_msg = await bot.wait_for("message", check=check)
-        if age_msg.content.isdigit():
-            age = int(age_msg.content)
-            if 15 <= age <= 35:
-                break
-        await interaction.followup.send("Âge invalide. Réessaie entre 15 et 35.", ephemeral=True)
+    questions = [
+        ("Quel est ton prénom ?", "Prénom"),
+        ("Ton âge (15-35) ?", "Âge"),
+        ("Département ?", "Département"),
+        ("Genre (Fille / Garçon) ?", "Genre"),
+        ("Orientation ?", "Orientation"),
+        ("Que recherches-tu sur ce serveur ?", "Recherche"),
+        ("Qu'attends-tu chez quelqu'un ?", "Recherche_chez"),
+        ("Tes passions ?", "Passions"),
+        ("Petite description :", "Description")
+    ]
 
-    await interaction.followup.send("Ton département ?", ephemeral=True)
-    departement = (await bot.wait_for("message", check=check)).content.strip()
+    data = {}
 
-    await interaction.followup.send("Ton genre (Fille / Garçon) ?", ephemeral=True)
-    genre = (await bot.wait_for("message", check=check)).content.strip()
+    for q, key in questions:
+        await interaction.followup.send(q, ephemeral=True)
+        try:
+            r = await bot.wait_for("message", check=check, timeout=120)
+            val = r.content.strip()
+            if key == "Âge":
+                if not val.isdigit():
+                    await interaction.followup.send("❌ Merci d’indiquer un âge valide.", ephemeral=True)
+                    return
+                age = int(val)
+                if age < 15 or age > 35:
+                    await interaction.followup.send("❌ Âge non autorisé (15-35).", ephemeral=True)
+                    return
+                data[key] = age
+            else:
+                data[key] = val
+        except:
+            await interaction.followup.send("⛔ Temps dépassé ou erreur.", ephemeral=True)
+            return
 
-    await interaction.followup.send("Ton orientation ?", ephemeral=True)
-    orientation = (await bot.wait_for("message", check=check)).content.strip()
+    profils[interaction.user.id] = data
+    await poster_profil(interaction, data, image_url)
+class ProfilView(View):
+    def __init__(self, auteur_id):
+        super().__init__(timeout=None)
+        self.auteur_id = auteur_id
+        self.add_item(ContactButton(auteur_id))
+        self.add_item(ReportButton())
 
-    await interaction.followup.send("Que recherches-tu ?", ephemeral=True)
-    recherche = (await bot.wait_for("message", check=check)).content.strip()
+class ContactButton(Button):
+    def __init__(self, cible_id):
+        super().__init__(label="Contacter cette personne", style=discord.ButtonStyle.success, custom_id="contact")
+        self.cible_id = cible_id
 
-    await interaction.followup.send("Que recherches-tu chez quelqu'un ?", ephemeral=True)
-    recherche_chez = (await bot.wait_for("message", check=check)).content.strip()
+    async def callback(self, interaction: discord.Interaction):
+        sender_id = interaction.user.id
+        receiver_id = self.cible_id
 
-    await interaction.followup.send("Tes passions ?", ephemeral=True)
-    passions = (await bot.wait_for("message", check=check)).content.strip()
+        if sender_id == receiver_id:
+            return await interaction.response.send_message("Tu ne peux pas te contacter toi-même.", ephemeral=True)
 
-    await interaction.followup.send("Décris-toi :", ephemeral=True)
-    description = (await bot.wait_for("message", check=check)).content.strip()
+        sender = profils.get(sender_id)
+        receiver = profils.get(receiver_id)
 
-    await interaction.followup.send("Envoie une image ou tape `skip`.", ephemeral=True)
-    img_msg = await bot.wait_for("message", check=check)
-    image_url = None
-    if img_msg.attachments:
-        image_url = img_msg.attachments[0].url
-    elif img_msg.content.lower().startswith("http"):
-        image_url = img_msg.content.strip()
+        log = f"📩 {interaction.user.name}#{interaction.user.discriminator} a cliqué sur [Contacter cette personne] pour {receiver['Prénom']} à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+        compat_txt = "Compatibilité inconnue"
 
+        if sender and receiver:
+            compat = calcul_compatibilite(sender["Âge"], receiver["Âge"])
+            if compat == 0:
+                await interaction.response.send_message("Cet écart d'âge est inapproprié. Respecte autrui.", ephemeral=True)
+                await bot.get_channel(CHANNEL_LOGS).send(f"⚠️ Alerte Pointeur : {interaction.user.name}#{interaction.user.discriminator} ({sender['Âge']}) → {receiver['Prénom']} ({receiver['Âge']})")
+                return
+            compat_txt = f"Compatibilité : {compat}% ✅" if compat >= 90 else f"Compatibilité : {compat}%"
+            try:
+                await interaction.user.send(f"Tu as contacté {receiver['Prénom']} — {compat_txt}")
+            except:
+                pass
+
+            try:
+                await bot.get_user(receiver_id).send(f"{interaction.user.name}#{interaction.user.discriminator} a voulu te contacter.")
+            except:
+                pass
+
+        await bot.get_channel(CHANNEL_LOGS).send(f"{log} — {compat_txt}")
+        await interaction.response.send_message("✅ Demande envoyée.", ephemeral=True)
+
+class ReportButton(Button):
+    def __init__(self):
+        super().__init__(label="Signaler ce profil", style=discord.ButtonStyle.danger, custom_id="report")
+
+    async def callback(self, interaction: discord.Interaction):
+        await bot.get_channel(CHANNEL_LOGS).send(f"🚨 {interaction.user.name}#{interaction.user.discriminator} a signalé un profil à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+        await interaction.response.send_message("Le profil a été signalé. Merci.", ephemeral=True)
+
+def calcul_compatibilite(age1, age2):
+    pointer = (age1 / 2) + 7
+    if age2 < pointer:
+        return 0
+    diff = abs(age1 - age2)
+    return max(0, 100 - diff * 4)
+
+async def poster_profil(interaction, data, image_url):
     embed = discord.Embed(
-        title=f"{'💖' if genre.lower() == 'fille' else '💙'} Nouveau profil {genre} !",
-        description="Un nouveau profil vient d'apparaître...\n\n> Il y a des regards qui racontent plus que mille mots.",
-        color=discord.Color.from_rgb(15, 15, 15)
+        title=f"{'💖' if data['Genre'].lower() == 'fille' else '💙'} Nouveau profil {data['Genre']} !",
+        description="Un nouveau profil vient d'apparaître...\n\n> Les mystères de la nuit n’ont pas fini de nous surprendre.",
+        color=discord.Color.from_rgb(20, 20, 20)
     )
-    embed.set_author(name=f"{interaction.user.name}#{interaction.user.discriminator}",
-                     icon_url=image_url if image_url else bot.user.avatar.url)
+    embed.set_author(name=f"{interaction.user.name}#{interaction.user.discriminator}", icon_url=interaction.user.avatar.url if interaction.user.avatar else None)
     if image_url:
         embed.set_thumbnail(url=image_url)
 
-    embed.add_field(name="Prénom", value=prenom, inline=False)
-    embed.add_field(name="Âge", value=str(age), inline=False)
-    embed.add_field(name="Département", value=departement, inline=False)
-    embed.add_field(name="Genre", value=genre, inline=False)
-    embed.add_field(name="Orientation", value=orientation, inline=False)
-    embed.add_field(name="Recherche sur le serveur", value=recherche, inline=False)
-    embed.add_field(name="Recherche chez quelqu'un", value=recherche_chez, inline=False)
-    embed.add_field(name="Passions", value=passions, inline=False)
-    embed.add_field(name="Description", value=description, inline=False)
+    embed.add_field(name="Prénom", value=data["Prénom"], inline=False)
+    embed.add_field(name="Âge", value=str(data["Âge"]), inline=False)
+    embed.add_field(name="Département", value=data["Département"], inline=False)
+    embed.add_field(name="Genre", value=data["Genre"], inline=False)
+    embed.add_field(name="Orientation", value=data["Orientation"], inline=False)
+    embed.add_field(name="Recherche", value=data["Recherche"], inline=False)
+    embed.add_field(name="Recherche chez quelqu'un", value=data["Recherche_chez"], inline=False)
+    embed.add_field(name="Passions", value=data["Passions"], inline=False)
+    embed.add_field(name="Description", value=data["Description"], inline=False)
+    embed.set_footer(text=f"Profil ID: {interaction.user.id}")
 
-    user_profiles[interaction.user.id] = {
-        "prénom": prenom,
-        "âge": age,
-        "département": departement,
-        "genre": genre,
-        "orientation": orientation,
-        "recherche": recherche,
-        "recherche_chez": recherche_chez,
-        "passions": passions,
-        "description": description
-    }
-
-    view = ProfileView(interaction.user.id)
-    channel = bot.get_channel(GIRLS_CHANNEL_ID if genre.lower() == "fille" else BOYS_CHANNEL_ID)
-    sent = await channel.send(embed=embed, view=view)
-    await sent.add_reaction("✅")
-    await sent.add_reaction("❌")
-    presentation_authors[sent.id] = interaction.user.id
+    target_channel = bot.get_channel(CHANNEL_FILLE if data["Genre"].lower() == "fille" else CHANNEL_GARCON)
+    msg = await target_channel.send(embed=embed, view=ProfilView(interaction.user.id))
+    await msg.add_reaction("✅")
+    await msg.add_reaction("❌")
 
     await interaction.followup.send("✅ Ton profil a bien été publié !", ephemeral=True)
+    await bot.get_channel(CHANNEL_LOGS).send(f"📝 Nouveau profil par {interaction.user.name}#{interaction.user.discriminator} à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} — ID {interaction.user.id}")
 
-# Fin de la fonction
 
 bot.run(TOKEN)
