@@ -46,7 +46,7 @@ class StartProfilButton(Button):
             ("Quel est ton prénom ?", "Prénom"),
             ("Ton âge (15-35) ?", "Âge"),
             ("Département ?", "Département"),
-            ("Genre ? (Garçon / Fille / Autre)", "Genre"),
+            ("Genre ? (Garçon / Fille )", "Genre"),
             ("Orientation ?", "Orientation"),
             ("Que recherches-tu sur ce serveur ?", "Recherche"),
             ("Qu'attends-tu chez quelqu'un ?", "Recherche chez quelqu'un"),
@@ -86,9 +86,6 @@ class ProfilView(View):
     def __init__(self, auteur_id):
         super().__init__(timeout=None)
         self.auteur_id = auteur_id
-
-        self.add_item(Button(label="Contacter cette personne", style=discord.ButtonStyle.success, custom_id="contact"))
-        self.add_item(Button(label="Signaler ce profil", style=discord.ButtonStyle.danger, custom_id="report"))
 
     async def interaction_check(self, interaction: discord.Interaction):
         return True
@@ -153,7 +150,7 @@ async def on_ready():
             description="**Clique ci-dessous pour créer ton profil anonyme.**\nLes regards ne mentent jamais...",
             color=discord.Color.from_rgb(20, 20, 20)
         )
-        embed.set_footer(text="Noctys • Ambiance mystique")
+        embed.set_footer(text=".gg/noctys")
         embed.set_author(name="Système de Rencontre", icon_url=bot.user.avatar.url if bot.user.avatar else None)
         await accueil_channel.send(embed=embed, view=StartProfilView())
 
