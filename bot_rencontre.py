@@ -21,6 +21,7 @@ class StartProfilButton(Button):
         super().__init__(label="Remplir mon profil", style=discord.ButtonStyle.primary, custom_id="start_profil")
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
         channel = await interaction.user.create_dm()
         await channel.send("Salut ! On va remplir ta présentation.\nEnvoie une image ou un lien, ou écris `skip`.")
 
@@ -99,6 +100,40 @@ class ProfilView(View):
                 await auteur.send(f"📬 {interaction.user.mention} souhaite te contacter !")
             except:
                 pass
+                # --- Compatibilité ---
+data1 = profils.get(interaction.user.id)
+data2 = profils.get(self.auteur_id)
+
+if data1 and data2:
+    score = 0
+
+    if data1.get("Orientation") == data2.get("Orientation"):
+        score += 25
+    if data1.get("Recherche") == data2.get("Recherche"):
+        score += 25
+    if data1.get("Département") == data2.get("Département"):
+        score += 15
+    if data1.get("Passions") and data2.get("Passions"):
+        if any(p.lower() in data2["Passions"].lower() for p in data1["Passions"].split()):
+            score += 20
+    if data1.get("Genre") != data2.get("Genre"):
+        score += 15
+
+    compat_embed = discord.Embed(
+        title="🌌 Compatibilité entre vous deux",
+        description=f"**Score de compatibilité : {score}/100**",
+        color=discord.Color.dark_purple()
+    )
+    if score >= 90:
+        compat_embed.description += "\n✅ **Très bonne compatibilité !**"
+    elif score >= 60:
+        compat_embed.description += "\n➕ **Compatibilité correcte.**"
+    else:
+        compat_embed.description += "\n❌ **Compatibilité faible.**"
+
+    await interaction.user.send(embed=compat_embed)
+else:
+    await interaction.user.send("⚠️ L’un de vous deux n’a pas encore rempli de profil, compatibilité impossible.")
 
         logs = bot.get_channel(CHANNEL_LOGS)
         if logs:
@@ -131,7 +166,10 @@ async def poster_profil(interaction, data, image_url):
 
     if target_channel:
         message = await target_channel.send(embed=embed, view=ProfilView(interaction.user.id))
-
+        await message.add_reaction("✅")
+        await message.add_reaction("❌")
+        
+        await interaction.followup.send("✅ Ton profil a bien été publié !", ephemeral=True)
     logs = bot.get_channel(CHANNEL_LOGS)
     if logs:
         await logs.send(f"🧾 Profil de {interaction.user} posté dans {'fille' if 'fille' in genre else 'garçon'} à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
