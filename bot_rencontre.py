@@ -1,8 +1,8 @@
 import discord
-    from discord.ext import commands
-    from discord.ui import Button, View
-    from datetime import datetime
-    import os
+from discord.ext import commands
+from discord.ui import Button, View
+from datetime import datetime
+import os
     
     TOKEN = os.getenv("TOKEN")
     GUILD_ID = 1360356060229013605  # Remplace par ton ID de serveur
