@@ -157,30 +157,30 @@ else:
 
 
 
-            compat_embed = discord.Embed(
-                title="🌌 Compatibilité détectée",
-                description=f"**Score total : {score}/100**",
-                color=discord.Color.dark_purple()
-            )
-            if score >= 90:
-                compat_embed.description += "\n✅ Très bonne compatibilité !"
-            elif score >= 60:
-                compat_embed.description += "\n🔄 Compatibilité correcte."
-            else:
-                compat_embed.description += "\n❌ Faible compatibilité."
-            if critere:
-                compat_embed.add_field(name="Critères communs :", value="\n".join(critere), inline=False)
-
-            await interaction.user.send(embed=compat_embed)
-            logs = bot.get_channel(CHANNEL_LOGS)
-            if logs:
-                await logs.send(f"📊 Compatibilité entre {interaction.user} et {auteur} : {score}/100 | Critères : {', '.join(critere)}")
+        compat_embed = discord.Embed(
+            title="🌌 Compatibilité détectée",
+            description=f"**Score total : {score}/100**",
+            color=discord.Color.dark_purple()
+        )
+        if score >= 90:
+            compat_embed.description += "\n✅ Très bonne compatibilité !"
+        elif score >= 60:
+            compat_embed.description += "\n🔄 Compatibilité correcte."
         else:
-            await interaction.user.send("⚠️ L’un de vous deux n’a pas encore de profil. Compatibilité non calculable.")
+            compat_embed.description += "\n❌ Faible compatibilité."
+        if critere:
+            compat_embed.add_field(name="Critères communs :", value="\n".join(critere), inline=False)
 
+        await interaction.user.send(embed=compat_embed)
         logs = bot.get_channel(CHANNEL_LOGS)
         if logs:
-            await logs.send(f"📨 {interaction.user} a cliqué sur le bouton de contact du profil de {auteur} à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+            await logs.send(f"📊 Compatibilité entre {interaction.user} et {auteur} : {score}/100 | Critères : {', '.join(critere)}")
+    else:
+        await interaction.user.send("⚠️ L’un de vous deux n’a pas encore de profil. Compatibilité non calculable.")
+
+    logs = bot.get_channel(CHANNEL_LOGS)
+    if logs:
+        await logs.send(f"📨 {interaction.user} a cliqué sur le bouton de contact du profil de {auteur} à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
     @discord.ui.button(label="Signaler ce profil", style=discord.ButtonStyle.danger)
     async def report(self, interaction: discord.Interaction, button: discord.ui.Button):
