@@ -94,13 +94,32 @@ class ProfilView(View):
 
     @discord.ui.button(label="Contacter cette personne", style=discord.ButtonStyle.success)
     async def contact(self, interaction: discord.Interaction, button: discord.ui.Button):
-        auteur = await bot.fetch_user(self.auteur_id)
-        if auteur:
-            try:
-                await interaction.user.send(f"📬 Tu as demandé à contacter {auteur.mention}.")
-                await auteur.send(f"📬 {interaction.user.mention} souhaite te contacter !")
-            except:
-                pass
+      auteur = await bot.fetch_user(self.auteur_id)
+data1 = profils.get(interaction.user.id)
+data2 = profils.get(self.auteur_id)
+
+if data1 and data2:
+    try:
+        age_user = int(data1.get("Âge"))
+        age_target = int(data2.get("Âge"))
+        min_age = (age_user / 2) + 7
+
+        if age_target < min_age:
+            await interaction.user.send("🚫 Tu ne peux pas contacter cette personne.\nL'écart d'âge est jugé inapproprié selon la règle du 'théorème du pointeur'. Merci de respecter autrui.")
+            logs = bot.get_channel(CHANNEL_LOGS)
+            if logs:
+                await logs.send(
+                    f"⚠️ Théorème du pointeur déclenché : {interaction.user} ({age_user} ans) a tenté de contacter {auteur} ({age_target} ans) - contact bloqué."
+                )
+            return
+    except:
+        pass
+
+    try:
+        await interaction.user.send(f"📬 Tu as demandé à contacter {auteur.mention}.")
+        await auteur.send(f"📬 {interaction.user.mention} souhaite te contacter !")
+    except:
+        pass
 
                 # --- Compatibilité ---
         data1 = profils.get(interaction.user.id)
@@ -123,14 +142,20 @@ class ProfilView(View):
             if any(p in passions2 for p in passions1):
                 score += 20
                 critere.append("🔥 Passions communes")
-           genre1 = data1.get("Genre", "").lower() 
-           genre2 = data2.get("Genre", "").lower()
-           if genre1 != genre2:
-           score += 15
-           critere.append("💞 Genres opposés")
-           elif genre1 == genre2:
-           score += 15
-           critere.append("🩷 Genres identiques")
+genre1 = data1.get("Genre", "").lower()
+genre2 = data2.get("Genre", "").lower()
+
+if genre1 in ["garçon", "fille"] and genre2 in ["garçon", "fille"]:
+    if genre1 != genre2:
+        score += 15
+        critere.append("💕 Genres opposés")
+    else:
+        score += 15
+        critere.append("💗 Genres identiques")
+else:
+    critere.append("⚠️ Genre non reconnu")
+
+
 
             compat_embed = discord.Embed(
                 title="🌌 Compatibilité détectée",
