@@ -98,42 +98,54 @@ class ProfilView(View):
             try:
                 await interaction.user.send(f"📬 Tu as demandé à contacter {auteur.mention}.")
                 await auteur.send(f"📬 {interaction.user.mention} souhaite te contacter !")
-                  # --- Compatibilité ---
-data1 = profils.get(interaction.user.id)
-data2 = profils.get(self.auteur_id)
-
-if data1 and data2:
-    score = 0
-
-    if data1.get("Orientation") == data2.get("Orientation"):
-        score += 25
-    if data1.get("Recherche") == data2.get("Recherche"):
-        score += 25
-    if data1.get("Département") == data2.get("Département"):
-        score += 15
-    if data1.get("Passions") and data2.get("Passions"):
-        if any(p.lower() in data2["Passions"].lower() for p in data1["Passions"].split()):
-            score += 20
-    if data1.get("Genre") != data2.get("Genre"):
-        score += 15
-
-    compat_embed = discord.Embed(
-        title="🌌 Compatibilité entre vous deux",
-        description=f"**Score de compatibilité : {score}/100**",
-        color=discord.Color.dark_purple()
-    )
-    if score >= 90:
-        compat_embed.description += "\n✅ **Très bonne compatibilité !**"
-    elif score >= 60:
-        compat_embed.description += "\n➕ **Compatibilité correcte.**"
-    else:
-        compat_embed.description += "\n❌ **Compatibilité faible.**"
-
-    await interaction.user.send(embed=compat_embed)
-else:
-    await interaction.user.send("⚠️ L’un de vous deux n’a pas encore rempli de profil, compatibilité impossible.")
             except:
                 pass
+
+                # --- Compatibilité ---
+        data1 = profils.get(interaction.user.id)
+        data2 = profils.get(self.auteur_id)
+        score = 0
+        critere = []
+
+        if data1 and data2:
+            if data1.get("Orientation") == data2.get("Orientation"):
+                score += 25
+                critere.append("🔗 Orientation")
+            if data1.get("Recherche") == data2.get("Recherche"):
+                score += 25
+                critere.append("🎯 Recherche")
+            if data1.get("Département") == data2.get("Département"):
+                score += 15
+                critere.append("📍 Département")
+            passions1 = data1.get("Passions", "").lower().split()
+            passions2 = data2.get("Passions", "").lower()
+            if any(p in passions2 for p in passions1):
+                score += 20
+                critere.append("🔥 Passions communes")
+            if data1.get("Genre") != data2.get("Genre"):
+                score += 15
+                critere.append("💞 Genres opposés")
+
+            compat_embed = discord.Embed(
+                title="🌌 Compatibilité détectée",
+                description=f"**Score total : {score}/100**",
+                color=discord.Color.dark_purple()
+            )
+            if score >= 90:
+                compat_embed.description += "\n✅ Très bonne compatibilité !"
+            elif score >= 60:
+                compat_embed.description += "\n🔄 Compatibilité correcte."
+            else:
+                compat_embed.description += "\n❌ Faible compatibilité."
+            if critere:
+                compat_embed.add_field(name="Critères communs :", value="\n".join(critere), inline=False)
+
+            await interaction.user.send(embed=compat_embed)
+            logs = bot.get_channel(CHANNEL_LOGS)
+            if logs:
+                await logs.send(f"📊 Compatibilité entre {interaction.user} et {auteur} : {score}/100 | Critères : {', '.join(critere)}")
+        else:
+            await interaction.user.send("⚠️ L’un de vous deux n’a pas encore de profil. Compatibilité non calculable.")
 
         logs = bot.get_channel(CHANNEL_LOGS)
         if logs:
