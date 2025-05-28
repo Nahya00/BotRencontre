@@ -93,6 +93,7 @@ class ProfilView(View):
 
     @discord.ui.button(label="Contacter cette personne", style=discord.ButtonStyle.success)
     async def contact(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(thinking=False)
         auteur = await bot.fetch_user(self.auteur_id)
         if auteur:
             try:
