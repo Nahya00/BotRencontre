@@ -121,64 +121,6 @@ if data1 and data2:
     except:
         pass
 
-                # --- Compatibilité ---
-        data1 = profils.get(interaction.user.id)
-        data2 = profils.get(self.auteur_id)
-        score = 0
-        critere = []
-
-        if data1 and data2:
-            if data1.get("Orientation") == data2.get("Orientation"):
-                score += 25
-                critere.append("🔗 Orientation")
-            if data1.get("Recherche") == data2.get("Recherche"):
-                score += 25
-                critere.append("🎯 Recherche")
-            if data1.get("Département") == data2.get("Département"):
-                score += 15
-                critere.append("📍 Département")
-            passions1 = data1.get("Passions", "").lower().split()
-            passions2 = data2.get("Passions", "").lower()
-            if any(p in passions2 for p in passions1):
-                score += 20
-                critere.append("🔥 Passions communes")
-genre1 = data1.get("Genre", "").lower()
-genre2 = data2.get("Genre", "").lower()
-
-if genre1 in ["garçon", "fille"] and genre2 in ["garçon", "fille"]:
-    if genre1 != genre2:
-        score += 15
-        critere.append("💕 Genres opposés")
-    else:
-        score += 15
-        critere.append("💗 Genres identiques")
-else:
-    critere.append("⚠️ Genre non reconnu")
-
-
-
-    compat_embed = discord.Embed(
-        title="🌌 Compatibilité détectée",
-        description=f"**Score total : {score}/100**",
-        color=discord.Color.dark_purple()
-    )
-
-    if score >= 90:
-        compat_embed.description += "\n✅ Très bonne compatibilité !"
-    elif score >= 60:
-        compat_embed.description += "\n🔄 Compatibilité correcte."
-    else:
-        compat_embed.description += "\n❌ Faible compatibilité."
-
-    if critere:
-        compat_embed.add_field(name="Critères communs :", value="\n".join(critere), inline=False)
-
-    await interaction.user.send(embed=compat_embed)
-    logs = bot.get_channel(CHANNEL_LOGS)
-    if logs:
-        await logs.send(f"📊 Compatibilité entre {interaction.user} et {auteur} : {score}/100 | Critères : {', '.join(critere)}")
-
-
     @discord.ui.button(label="Signaler ce profil", style=discord.ButtonStyle.danger)
     async def report(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message("⚠️ Le profil a été signalé. Merci pour ton retour.", ephemeral=True)
