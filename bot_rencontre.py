@@ -21,6 +21,7 @@ class StartProfilButton(Button):
         super().__init__(label="Remplir mon profil", style=discord.ButtonStyle.primary, custom_id="start_profil")
 
     async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=False, ephemeral=True)
         channel = await interaction.user.create_dm()
         await channel.send("Salut ! On va remplir ta présentation.\nEnvoie une image ou un lien, ou écris `skip`.")
 
@@ -87,8 +88,9 @@ class ProfilView(View):
     def __init__(self, auteur_id):
         super().__init__(timeout=None)
         self.auteur_id = auteur_id
-        self.add_item(Button(label="Contacter cette personne", style=discord.ButtonStyle.success, custom_id="contact"))
-        self.add_item(Button(label="Signaler ce profil", style=discord.ButtonStyle.danger, custom_id="report"))
+        await message.add_reaction("✅")
+        await message.add_reaction("❌")
+
 
     @discord.ui.button(label="Contacter cette personne", style=discord.ButtonStyle.success)
     async def contact(self, interaction: discord.Interaction, button: discord.ui.Button):
