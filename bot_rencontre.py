@@ -88,8 +88,7 @@ class ProfilView(View):
     def __init__(self, auteur_id):
         super().__init__(timeout=None)
         self.auteur_id = auteur_id
-        await message.add_reaction("✅")
-        await message.add_reaction("❌")
+      
 
 
     @discord.ui.button(label="Contacter cette personne", style=discord.ButtonStyle.success)
@@ -142,6 +141,8 @@ async def poster_profil(interaction, data, image_url):
     embed = build_profile_embed(interaction.user, data, image_url)
     if target_channel:
         await target_channel.send(embed=embed, view=ProfilView(interaction.user.id))
+        await message.add_reaction("✅")
+        await message.add_reaction("❌")
 
     logs = bot.get_channel(CHANNEL_LOGS)
     if logs:
