@@ -77,7 +77,6 @@ class StartProfilButton(Button):
 
         profils[interaction.user.id] = profil_data
         await poster_profil(interaction, profil_data, image_url)
-            try:
         await interaction.user.send("✅ Ton profil a bien été posté sur le serveur !")
     except:
         pass
