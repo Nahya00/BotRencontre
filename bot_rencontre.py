@@ -48,7 +48,7 @@ class StartProfilButton(Button):
             ("Ton âge (15-35) ?", "Âge"),
             ("Département ?", "Département"),
             ("Genre ? (Garçon / Fille )", "Genre"),
-            ("Orientation ?", "Orientation"),
+            ("Orientation ? (Hétéro / Homo / Bi / Pan / Autre)", "Orientation"),
             ("Que recherches-tu sur ce serveur ?", "Recherche"),
             ("Qu'attends-tu chez quelqu'un ?", "Recherche chez quelqu'un"),
             ("Tes passions ?", "Passions"),
@@ -77,6 +77,10 @@ class StartProfilButton(Button):
 
         profils[interaction.user.id] = profil_data
         await poster_profil(interaction, profil_data, image_url)
+            try:
+        await interaction.user.send("✅ Ton profil a bien été posté sur le serveur !")
+    except:
+        pass
 
 class StartProfilView(View):
     def __init__(self):
@@ -122,9 +126,14 @@ class ProfilView(View):
             if any(p in passions2 for p in passions1):
                 score += 20
                 critere.append("🔥 Passions communes")
-            if data1.get("Genre") != data2.get("Genre"):
-                score += 15
-                critere.append("💞 Genres opposés")
+           genre1 = data1.get("Genre", "").lower() 
+           genre2 = data2.get("Genre", "").lower()
+           if genre1 != genre2:
+           score += 15
+           critere.append("💞 Genres opposés")
+           elif genre1 == genre2:
+           score += 15
+           critere.append("🩷 Genres identiques")
 
             compat_embed = discord.Embed(
                 title="🌌 Compatibilité détectée",
@@ -181,7 +190,6 @@ async def poster_profil(interaction, data, image_url):
         await message.add_reaction("✅")
         await message.add_reaction("❌")
         
-        await interaction.followup.send("✅ Ton profil a bien été publié !", ephemeral=True)
     logs = bot.get_channel(CHANNEL_LOGS)
     if logs:
         await logs.send(f"🧾 Profil de {interaction.user} posté dans {'fille' if 'fille' in genre else 'garçon'} à {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
