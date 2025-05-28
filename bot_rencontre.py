@@ -1,4 +1,4 @@
-import discord
+ageimport discord
 from discord.ext import commands
 from discord.ui import Button, View
 from datetime import datetime
@@ -140,7 +140,7 @@ async def poster_profil(interaction, data, image_url):
     target_channel = bot.get_channel(CHANNEL_FILLE) if "fille" in genre else bot.get_channel(CHANNEL_GARCON)
     embed = build_profile_embed(interaction.user, data, image_url)
     if target_channel:
-        await target_channel.send(embed=embed, view=ProfilView(interaction.user.id))
+        message = await target_channel.send(embed=embed, view=ProfilView(interaction.user.id))
         await message.add_reaction("✅")
         await message.add_reaction("❌")
 
