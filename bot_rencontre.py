@@ -1,4 +1,4 @@
-ageimport discord
+import discord
 from discord.ext import commands
 from discord.ui import Button, View
 from datetime import datetime
@@ -47,7 +47,7 @@ class StartProfilButton(Button):
             ("Quel est ton prénom ?", "Prénom"),
             ("Ton âge (15-35) ?", "Âge"),
             ("Département ?", "Département"),
-            ("Genre ? (Garçon / Fille / Autre)", "Genre"),
+            ("Genre ? (Garçon / Fille)", "Genre"),
             ("Orientation ? (Hétéro / Bi / Homo / Autre)", "Orientation"),
             ("Que recherches-tu sur ce serveur ?", "Recherche"),
             ("Qu'attends-tu chez quelqu'un ?", "Recherche chez quelqu'un"),
