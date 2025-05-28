@@ -114,7 +114,6 @@ if data1 and data2:
             return
     except:
         pass
-
     try:
         await interaction.user.send(f"📬 Tu as demandé à contacter {auteur.mention}.")
         await auteur.send(f"📬 {interaction.user.mention} souhaite te contacter !")
