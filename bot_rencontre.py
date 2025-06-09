@@ -5,11 +5,11 @@ from datetime import datetime
 import os
 
 TOKEN = os.getenv("TOKEN")
-GUILD_ID = 123456789012345678  # Remplace par ton ID de serveur
-CHANNEL_ACCUEIL = 1362035171301527654
-CHANNEL_FILLE = 1362035175269077174
-CHANNEL_GARCON = 1362035179358781480
-CHANNEL_LOGS = 1376347435747643475
+GUILD_ID = 1361778893681463436  # Remplace par ton ID de serveur
+CHANNEL_ACCUEIL = 1379271057520721961
+CHANNEL_FILLE = 1379271062012821515
+CHANNEL_GARCON = 1379271067369082940
+CHANNEL_LOGS = 1379271457187696711
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -131,7 +131,7 @@ def build_profile_embed(user, data, image_url):
     embed = discord.Embed(title=titre, description="❖ Un nouveau profil vient d'apparaître...\n\n> Il y a des regards qui racontent plus que mille mots.", color=color)
     for champ in ["Prénom", "Âge", "Département", "Genre", "Orientation", "Recherche", "Recherche chez quelqu'un", "Passions", "Description"]:
         embed.add_field(name=champ, value=data.get(champ, "?"), inline=False)
-    embed.set_footer(text="Noctys - Profil mystère")
+    embed.set_footer(text="Tsukaya - Profil mystère")
     embed.set_thumbnail(url=image_url)
     embed.set_author(name=user.name, icon_url=user.avatar.url if user.avatar else None)
     return embed
@@ -159,11 +159,11 @@ async def on_ready():
         except:
             pass
         embed = discord.Embed(
-            title="Rencontre Mystère Noctys",
+            title="Rencontre Mystère Tsukaya",
             description="**Clique ci-dessous pour créer ton profil.**\nLes regards ne mentent jamais...",
             color=discord.Color.from_rgb(20, 20, 20)
         )
-        embed.set_footer(text="Noctys")
+        embed.set_footer(text="Tsukaya")
         embed.set_author(name="Système de Rencontre", icon_url=bot.user.avatar.url if bot.user.avatar else None)
         await accueil_channel.send(embed=embed, view=StartProfilView())
 
